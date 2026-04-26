@@ -42,7 +42,6 @@ export default function OnboardingScreen() {
   const handleComplete = () => {
     navigation.replace('SignUp');
   };
-
   const renderItem = ({ item }: { item: typeof slides[0] }) => (
     <View style={{ width }} className="items-center px-6">
       
