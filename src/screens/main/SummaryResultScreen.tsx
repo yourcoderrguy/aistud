@@ -1,27 +1,42 @@
 import React, { useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity } from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
-import { useNavigation } from '@react-navigation/native';
-
-const mockSummary = `Data Structures are specialized formats for organizing, processing, retrieving and storing data. \n\n1. Arrays: A collection of items stored at contiguous memory locations. Excellent for fast access via index.\n2. Linked Lists: Elements are not stored in contiguous memory; every element points to the next. Great for dynamic memory allocation.\n3. Trees: Hierarchical structures with a root value and subtrees of children. Binary Search Trees (BST) allow for highly efficient searching and sorting algorithms.\n\nUnderstanding these fundamentals is critical for optimizing software performance and mastering complex algorithms.`;
-
-const mockFlashcards = [
-  { id: 1, q: "What is an Array?", a: "A collection of items stored at contiguous memory locations." },
-  { id: 2, q: "How does a Linked List differ from an Array?", a: "Linked List elements are not stored in contiguous memory; each element contains a pointer to the next." },
-  { id: 3, q: "What is the primary advantage of a Binary Search Tree (BST)?", a: "It allows for highly efficient searching, insertion, and deletion operations compared to linear data structures." },
-];
+import { useNavigation, useRoute } from '@react-navigation/native';
 
 export default function SummaryResultScreen() {
-  const navigation = useNavigation();
-  const [activeTab, setActiveTab] = useState<'summary' | 'flashcards'>('summary');
+  const navigation = useNavigation<any>();
+  const route = useRoute<any>();
+
+  // Extract data passed from the Flask API via CreateSummaryScreen
+  const resultData = route.params?.resultData;
+  const type = route.params?.type || 'summary'; // 'summary' | 'quiz' | 'flashcards'
+
+  // Flashcard State
   const [cardIndex, setCardIndex] = useState(0);
   const [isFlipped, setIsFlipped] = useState(false);
 
+  // Safety net: If no data was passed, show an error screen
+  if (!resultData) {
+    return (
+      <SafeAreaView className="flex-1 bg-[#FAFAFA] items-center justify-center px-6">
+        <Ionicons name="alert-circle" size={50} color="#EF4444" className="mb-4" />
+        <Text className="text-[18px] font-bold text-black mb-2">No Data Found</Text>
+        <Text className="text-[14px] text-gray-500 text-center mb-6">It looks like the AI didn't return any data.</Text>
+        <TouchableOpacity onPress={() => navigation.goBack()} className="bg-black px-6 py-3 rounded-xl">
+          <Text className="text-white font-bold">Go Back</Text>
+        </TouchableOpacity>
+      </SafeAreaView>
+    );
+  }
+
+  // --- FLASHCARD HANDLERS ---
+  const flashcards = resultData.flashcards || [];
+  
   const handleNextCard = () => {
     setIsFlipped(false);
-    if (cardIndex < mockFlashcards.length - 1) setCardIndex(cardIndex + 1);
+    if (cardIndex < flashcards.length - 1) setCardIndex(cardIndex + 1);
   };
 
   const handlePrevCard = () => {
@@ -33,63 +48,49 @@ export default function SummaryResultScreen() {
     <SafeAreaView className="flex-1 bg-[#FAFAFA]">
       <StatusBar style="dark" backgroundColor="transparent" />
 
-      {/* Top Header */}
+      {/* --- TOP HEADER --- */}
       <View className="flex-row items-center justify-between px-6 pt-4 pb-4">
+        {/* THE FIX: Reverted to goBack() for a guaranteed, error-free return */}
         <TouchableOpacity 
-          onPress={() => navigation.goBack()}
+          onPress={() => navigation.goBack()} 
           className="w-10 h-10 bg-white rounded-full items-center justify-center shadow-sm border border-gray-100"
         >
-          <Ionicons name="arrow-back" size={20} color="#000" />
+          <Ionicons name="close" size={24} color="#000" />
         </TouchableOpacity>
-        <Text className="text-[18px] font-extrabold text-black">Results</Text>
+        
+        <Text className="text-[18px] font-extrabold text-black">
+          {type === 'summary' ? 'Generated Summary' : type === 'quiz' ? 'Generated Quiz' : 'Flashcard Deck'}
+        </Text>
+        
         <TouchableOpacity className="w-10 h-10 items-center justify-center">
           <Ionicons name="bookmark-outline" size={22} color="#008080" />
         </TouchableOpacity>
       </View>
 
-      {/* Segmented Tab Control */}
-      <View className="px-6 mb-6">
-        <View className="flex-row bg-[#E6F2F2] p-1 rounded-xl">
-          <TouchableOpacity 
-            onPress={() => setActiveTab('summary')}
-            activeOpacity={0.8}
-            className={`flex-1 py-2.5 items-center justify-center rounded-lg ${activeTab === 'summary' ? 'bg-white shadow-sm' : ''}`}
-          >
-            <Text className={`font-bold text-[14px] ${activeTab === 'summary' ? 'text-[#008080]' : 'text-gray-500'}`}>
-              Summary
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity 
-            onPress={() => setActiveTab('flashcards')}
-            activeOpacity={0.8}
-            className={`flex-1 py-2.5 items-center justify-center rounded-lg ${activeTab === 'flashcards' ? 'bg-white shadow-sm' : ''}`}
-          >
-            <Text className={`font-bold text-[14px] ${activeTab === 'flashcards' ? 'text-[#008080]' : 'text-gray-500'}`}>
-              Flashcards ({mockFlashcards.length})
-            </Text>
-          </TouchableOpacity>
-        </View>
-      </View>
-
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 24, paddingBottom: 40, flexGrow: 1 }}>
         
-        {activeTab === 'summary' && (
-          <View className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm">
+        {/* ========================================== */}
+        {/* 1. RENDER SUMMARY                          */}
+        {/* ========================================== */}
+        {type === 'summary' && resultData.summary && (
+          <View className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm mt-4">
             <View className="flex-row items-center mb-4">
               <Ionicons name="document-text" size={20} color="#008080" />
               <Text className="text-[16px] font-extrabold text-black ml-2">Generated Notes</Text>
             </View>
             <Text className="text-[15px] text-gray-700 leading-7">
-              {mockSummary}
+              {resultData.summary}
             </Text>
           </View>
         )}
 
-        {activeTab === 'flashcards' && (
-          <View className="flex-1 justify-center items-center">
-            
+        {/* ========================================== */}
+        {/* 2. RENDER FLASHCARDS                       */}
+        {/* ========================================== */}
+        {type === 'flashcards' && flashcards.length > 0 && (
+          <View className="flex-1 justify-center items-center mt-6">
             <Text className="text-gray-400 font-medium text-[13px] mb-4">
-              Card {cardIndex + 1} of {mockFlashcards.length}
+              Card {cardIndex + 1} of {flashcards.length}
             </Text>
 
             <TouchableOpacity 
@@ -100,7 +101,7 @@ export default function SummaryResultScreen() {
               }`}
             >
               <Text className={`text-[20px] font-bold text-center leading-8 ${isFlipped ? 'text-white' : 'text-black'}`}>
-                {isFlipped ? mockFlashcards[cardIndex].a : mockFlashcards[cardIndex].q}
+                {isFlipped ? flashcards[cardIndex].back : flashcards[cardIndex].front}
               </Text>
               
               <View className="absolute bottom-6 flex-row items-center opacity-60">
@@ -121,18 +122,50 @@ export default function SummaryResultScreen() {
               </TouchableOpacity>
               
               <Text className="text-[15px] font-bold text-black">
-                {isFlipped ? "Answer" : "Question"}
+                {isFlipped ? "Answer" : "Concept"}
               </Text>
 
               <TouchableOpacity 
                 onPress={handleNextCard}
-                disabled={cardIndex === mockFlashcards.length - 1}
-                className={`w-14 h-14 rounded-full items-center justify-center border ${cardIndex === mockFlashcards.length - 1 ? 'bg-gray-50 border-gray-100' : 'bg-[#008080] border-[#008080] shadow-sm'}`}
+                disabled={cardIndex === flashcards.length - 1}
+                className={`w-14 h-14 rounded-full items-center justify-center border ${cardIndex === flashcards.length - 1 ? 'bg-gray-50 border-gray-100' : 'bg-[#008080] border-[#008080] shadow-sm'}`}
               >
-                <Ionicons name="chevron-forward" size={24} color={cardIndex === mockFlashcards.length - 1 ? "#D1D5DB" : "white"} />
+                <Ionicons name="chevron-forward" size={24} color={cardIndex === flashcards.length - 1 ? "#D1D5DB" : "white"} />
               </TouchableOpacity>
             </View>
+          </View>
+        )}
 
+        {/* ========================================== */}
+        {/* 3. RENDER QUIZ PREVIEW                     */}
+        {/* ========================================== */}
+        {type === 'quiz' && resultData.questions && (
+          <View className="mt-4">
+            <View className="bg-[#E3F2FD] p-6 rounded-3xl border border-[#90CAF9] items-center mb-6 shadow-sm">
+              <Ionicons name="checkmark-circle" size={44} color="#2196F3" className="mb-3" />
+              <Text className="text-[18px] font-extrabold text-black text-center mb-2">Quiz Successfully Generated!</Text>
+              <Text className="text-[14px] text-[#1565C0] text-center leading-5">
+                The AI created {resultData.questions.length} multiple-choice questions from your notes.
+              </Text>
+            </View>
+
+            <TouchableOpacity 
+              onPress={() => navigation.navigate('ActiveQuiz')} 
+              activeOpacity={0.8}
+              className="bg-[#2196F3] w-full py-4 rounded-xl items-center shadow-sm mb-6"
+            >
+              <Text className="text-white font-bold text-[16px]">Start Quiz Now</Text>
+            </TouchableOpacity>
+
+            <Text className="text-[16px] font-extrabold text-black mb-4">Question Preview:</Text>
+            {resultData.questions.map((q: any, index: number) => (
+              <View key={index} className="bg-white p-5 rounded-2xl border border-gray-100 mb-3 shadow-sm">
+                <Text className="font-bold text-[15px] text-black mb-2 leading-6">Q{index + 1}: {q.question}</Text>
+                <View className="bg-green-50 self-start px-3 py-1.5 rounded-lg border border-green-100 mt-1">
+                  <Text className="text-[13px] font-bold text-green-700">Ans: {q.correctAnswer}</Text>
+                </View>
+              </View>
+            ))}
           </View>
         )}
 

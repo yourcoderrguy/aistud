@@ -6,7 +6,6 @@ import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../context/AuthContext';
 import { useNavigation } from '@react-navigation/native';
 
-// Dynamic time calculator
 const getTimeOfDay = () => {
   const hour = new Date().getHours();
   if (hour < 12) return 'Morning';
@@ -16,15 +15,12 @@ const getTimeOfDay = () => {
 
 export default function DashboardScreen() {
   const { user } = useAuth();
-  // Using 'any' temporarily so you can freely navigate without TypeScript errors
   const navigation = useNavigation<any>();
   
-  // Safely grab the first name dynamically from the user's login session
   const firstName = user?.fullName?.split(' ')[0] || user?.email?.split('@')[0] || 'User';
   
   const [greeting, setGreeting] = useState(getTimeOfDay());
 
-  // Update greeting occasionally if they leave the app open for hours
   useEffect(() => {
     const interval = setInterval(() => setGreeting(getTimeOfDay()), 60000);
     return () => clearInterval(interval);
@@ -32,15 +28,12 @@ export default function DashboardScreen() {
 
   return (
     <SafeAreaView className="flex-1 bg-[#FAFAFA]">
-      {/* Explicitly lock the status bar so battery/time always show */}
       <StatusBar style="dark" backgroundColor="transparent" />
 
       <ScrollView 
         showsVerticalScrollIndicator={false} 
         contentContainerStyle={{ paddingHorizontal: 24, paddingTop: 20, paddingBottom: 40 }}
       >
-        
-        {/* Dynamic Header Section */}
         <View className="flex-row justify-between items-center mb-8">
           <View>
             <Text className="text-[26px] font-extrabold text-black tracking-tight">
@@ -56,7 +49,6 @@ export default function DashboardScreen() {
           </TouchableOpacity>
         </View>
 
-        {/* Primary Action Banner */}
         <View className="w-full bg-[#008080] rounded-3xl p-6 mb-8 shadow-sm">
           <Text className="text-white text-[20px] font-bold mb-2">Accelerate your learning</Text>
           <Text className="text-[#E6F2F2] text-[14px] leading-[22px] mb-5">
@@ -71,12 +63,9 @@ export default function DashboardScreen() {
           </TouchableOpacity>
         </View>
 
-        {/* Core Features Grid */}
         <Text className="text-[18px] font-extrabold text-black mb-4">Study Tools</Text>
         
         <View className="flex-row justify-between mb-4">
-          
-          {/* 1. Summaries Hub */}
           <TouchableOpacity 
             onPress={() => navigation.navigate('SummariesHub')}
             activeOpacity={0.7} 
@@ -89,7 +78,6 @@ export default function DashboardScreen() {
             <Text className="text-[12px] text-gray-500 text-center">AI generated notes</Text>
           </TouchableOpacity>
 
-          {/* 2. Flashcards Hub */}
           <TouchableOpacity 
             onPress={() => navigation.navigate('FlashcardsHub')}
             activeOpacity={0.7} 
@@ -101,12 +89,9 @@ export default function DashboardScreen() {
             <Text className="text-[15px] font-bold text-black mb-1">Flashcards</Text>
             <Text className="text-[12px] text-gray-500 text-center">Smart revision</Text>
           </TouchableOpacity>
-
         </View>
 
         <View className="flex-row justify-between">
-          
-          {/* 3. Quizzes Hub */}
           <TouchableOpacity 
             onPress={() => navigation.navigate('QuizzesHub')}
             activeOpacity={0.7} 
@@ -119,7 +104,6 @@ export default function DashboardScreen() {
             <Text className="text-[12px] text-gray-500 text-center">Test knowledge</Text>
           </TouchableOpacity>
 
-          {/* 4. History (Library Tab) */}
           <TouchableOpacity 
             onPress={() => navigation.navigate('Library')} 
             activeOpacity={0.7} 
@@ -131,9 +115,7 @@ export default function DashboardScreen() {
             <Text className="text-[15px] font-bold text-black mb-1">History</Text>
             <Text className="text-[12px] text-gray-500 text-center">Past sessions</Text>
           </TouchableOpacity>
-
         </View>
-
       </ScrollView>
     </SafeAreaView>
   );

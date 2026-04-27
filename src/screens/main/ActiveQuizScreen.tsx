@@ -1,11 +1,10 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, ScrollView, Animated } from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 
-// --- MOCK AI QUIZ DATA ---
 const quizData = [
   {
     id: 1,
@@ -33,7 +32,6 @@ const quizData = [
 export default function ActiveQuizScreen() {
   const navigation = useNavigation<any>();
 
-  // Quiz State
   const [currentIndex, setCurrentIndex] = useState(0);
   const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
   const [isSubmitted, setIsSubmitted] = useState(false);
@@ -60,33 +58,30 @@ export default function ActiveQuizScreen() {
       setSelectedAnswer(null);
       setIsSubmitted(false);
     } else {
-      // End of Quiz: In the future, this will navigate to a 'QuizResults' screen
       alert(`Quiz Complete! You scored ${score + (selectedAnswer === currentQuestion.correctAnswer && !isSubmitted ? 1 : 0)} out of ${quizData.length}`);
       navigation.goBack();
     }
   };
 
-  // Helper function to determine the color of the option cards
   const getOptionStyle = (option: string) => {
     if (!isSubmitted) {
       return selectedAnswer === option 
-        ? "bg-[#E6F2F2] border-[#008080]" // Selected (Pre-submit)
-        : "bg-white border-gray-200";     // Unselected
+        ? "bg-[#E6F2F2] border-[#008080]" 
+        : "bg-white border-gray-200";     
     }
     if (option === currentQuestion.correctAnswer) {
-      return "bg-[#ECFDF5] border-[#10B981]"; // Correct Answer (Green)
+      return "bg-[#ECFDF5] border-[#10B981]"; 
     }
     if (selectedAnswer === option && option !== currentQuestion.correctAnswer) {
-      return "bg-[#FEF2F2] border-[#EF4444]"; // Wrong Answer (Red)
+      return "bg-[#FEF2F2] border-[#EF4444]"; 
     }
-    return "bg-white border-gray-200 opacity-50"; // Other unselected options fade out
+    return "bg-white border-gray-200 opacity-50"; 
   };
 
   return (
     <SafeAreaView className="flex-1 bg-[#FAFAFA]">
       <StatusBar style="dark" backgroundColor="transparent" />
 
-      {/* --- TOP HEADER & PROGRESS BAR --- */}
       <View className="px-6 pt-4 pb-2">
         <View className="flex-row items-center justify-between mb-4">
           <TouchableOpacity 
@@ -98,12 +93,10 @@ export default function ActiveQuizScreen() {
           <Text className="text-[16px] font-extrabold text-black">
             Question {currentIndex + 1} of {quizData.length}
           </Text>
-          <View className="w-10 h-10" /> {/* Empty view for alignment */}
+          <View className="w-10 h-10" />
         </View>
 
-        {/* Progress Bar Track */}
         <View className="w-full h-2.5 bg-gray-200 rounded-full overflow-hidden">
-          {/* Progress Bar Fill */}
           <View 
             className="h-full bg-[#008080] rounded-full" 
             style={{ width: `${progressPercentage}%` }} 
@@ -115,12 +108,10 @@ export default function ActiveQuizScreen() {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ flexGrow: 1, paddingHorizontal: 24, paddingTop: 20, paddingBottom: 40 }}
       >
-        {/* --- QUESTION CANVAS --- */}
         <Text className="text-[22px] font-extrabold text-black leading-8 mb-8">
           {currentQuestion.question}
         </Text>
 
-        {/* --- ANSWER OPTIONS --- */}
         <View className="space-y-4 mb-8">
           {currentQuestion.options.map((option, index) => {
             const isCorrect = isSubmitted && option === currentQuestion.correctAnswer;
@@ -134,7 +125,6 @@ export default function ActiveQuizScreen() {
                 onPress={() => handleSelectOption(option)}
                 className={`flex-row items-center p-5 rounded-2xl border-2 mb-3 ${getOptionStyle(option)}`}
               >
-                {/* Option Letter Bubble */}
                 <View className={`w-10 h-10 rounded-full items-center justify-center mr-4 border ${
                   isCorrect ? 'bg-[#10B981] border-[#10B981]' : 
                   isWrongSelected ? 'bg-[#EF4444] border-[#EF4444]' : 
@@ -151,7 +141,6 @@ export default function ActiveQuizScreen() {
                   )}
                 </View>
                 
-                {/* Option Text */}
                 <Text className={`flex-1 text-[16px] font-medium ${
                   isCorrect ? 'text-[#065F46]' : 
                   isWrongSelected ? 'text-[#991B1B]' : 
@@ -164,7 +153,6 @@ export default function ActiveQuizScreen() {
           })}
         </View>
 
-        {/* --- AI EXPLANATION FEEDBACK --- */}
         {isSubmitted && selectedAnswer !== currentQuestion.correctAnswer && (
           <View className="bg-red-50 p-5 rounded-2xl border border-red-100 mb-8">
             <View className="flex-row items-center mb-2">
@@ -178,7 +166,6 @@ export default function ActiveQuizScreen() {
         )}
       </ScrollView>
 
-      {/* --- BOTTOM ACTION BUTTON --- */}
       <View className="px-6 pb-8 bg-[#FAFAFA] border-t border-gray-100 pt-4">
         {!isSubmitted ? (
           <TouchableOpacity 
@@ -205,7 +192,6 @@ export default function ActiveQuizScreen() {
           </TouchableOpacity>
         )}
       </View>
-
     </SafeAreaView>
   );
 }
