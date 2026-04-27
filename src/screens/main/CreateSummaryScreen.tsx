@@ -13,17 +13,22 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import * as DocumentPicker from 'expo-document-picker'; 
 
-// Import your Flask API connections
+// API & Global Store
 import { generateSummary, generateQuiz, generateFlashcards } from '../../services/api';
+import { useStudyStore } from '../../store/useStudyStore';
 
 export default function CreateSummaryScreen() {
   const navigation = useNavigation<any>(); 
+  const route = useRoute<any>();
   
-  // State for Inputs
-  const [inputText, setInputText] = useState('');
+  // Connect to our global memory bank
+  const { setSession } = useStudyStore();
+  
+  // State for Inputs (Auto-populate if data was sent from Dashboard Omni-Prompt)
+  const [inputText, setInputText] = useState(route.params?.initialText || '');
   const [selectedFile, setSelectedFile] = useState<DocumentPicker.DocumentPickerAsset | null>(null);
   
   // State for UI Feedback
@@ -55,7 +60,7 @@ export default function CreateSummaryScreen() {
   };
 
   // Trigger the Flask API
-const handleGenerate = async () => {
+  const handleGenerate = async () => {
     if (isButtonDisabled) return;
     
     Keyboard.dismiss(); 
@@ -64,7 +69,6 @@ const handleGenerate = async () => {
     try {
       let responseData;
       
-      // We now pass an object containing both the text and the file
       const payload = {
         text: inputText.trim(),
         file: selectedFile
@@ -78,10 +82,12 @@ const handleGenerate = async () => {
         responseData = await generateFlashcards(payload);
       }
 
-      navigation.navigate('SummaryResult', { 
-        resultData: responseData, 
-        type: activeTab 
-      });
+      // --- ENTERPRISE UPGRADE ---
+      // 1. Deposit the massive AI data into the global memory bank
+      setSession(activeTab, responseData);
+
+      // 2. Navigate instantly with an empty payload to keep the router lightning fast
+      navigation.navigate('SummaryResult');
 
     } catch (error) {
       alert("Failed to connect to the server. Ensure your Flask backend is running and the IP address in api.ts is correct.");

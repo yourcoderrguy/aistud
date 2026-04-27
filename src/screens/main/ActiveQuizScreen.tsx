@@ -1,41 +1,38 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, ScrollView } from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 
-const quizData = [
-  {
-    id: 1,
-    question: "What is the time complexity of searching for an element in a balanced Binary Search Tree (BST)?",
-    options: ["O(1)", "O(log n)", "O(n)", "O(n log n)"],
-    correctAnswer: "O(log n)",
-    explanation: "Because the tree is balanced, every step down cuts the remaining nodes in half, resulting in logarithmic time."
-  },
-  {
-    id: 2,
-    question: "Which data structure uses a LIFO (Last In, First Out) principle?",
-    options: ["Queue", "Linked List", "Stack", "Array"],
-    correctAnswer: "Stack",
-    explanation: "A stack operates like a stack of plates; the last plate you put on top is the first one you take off."
-  },
-  {
-    id: 3,
-    question: "What is the primary purpose of a Hash Table?",
-    options: ["Sorting data", "Fast data retrieval", "Graph traversal", "Creating loops"],
-    correctAnswer: "Fast data retrieval",
-    explanation: "Hash tables use a hash function to compute an index, allowing for O(1) average time complexity for lookups."
-  }
-];
+// Import our global memory bank
+import { useStudyStore } from '../../store/useStudyStore';
 
 export default function ActiveQuizScreen() {
   const navigation = useNavigation<any>();
+
+  // Extract the generated questions dynamically from the Zustand store
+  const { activeSession } = useStudyStore();
+  const quizData = activeSession?.questions || [];
 
   const [currentIndex, setCurrentIndex] = useState(0);
   const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [score, setScore] = useState(0);
+
+  // Safety net: If no quiz data is found in memory, prevent a crash
+  if (quizData.length === 0) {
+    return (
+      <SafeAreaView className="flex-1 bg-[#FAFAFA] items-center justify-center px-6">
+        <Ionicons name="alert-circle" size={50} color="#EF4444" className="mb-4" />
+        <Text className="text-[18px] font-bold text-black mb-2">No Quiz Found</Text>
+        <Text className="text-[14px] text-gray-500 text-center mb-6">It looks like the AI didn't return any questions.</Text>
+        <TouchableOpacity onPress={() => navigation.goBack()} className="bg-[#008080] px-6 py-3 rounded-xl shadow-sm">
+          <Text className="text-white font-bold">Go Back</Text>
+        </TouchableOpacity>
+      </SafeAreaView>
+    );
+  }
 
   const currentQuestion = quizData[currentIndex];
   const progressPercentage = ((currentIndex + 1) / quizData.length) * 100;
@@ -58,8 +55,13 @@ export default function ActiveQuizScreen() {
       setSelectedAnswer(null);
       setIsSubmitted(false);
     } else {
-      alert(`Quiz Complete! You scored ${score + (selectedAnswer === currentQuestion.correctAnswer && !isSubmitted ? 1 : 0)} out of ${quizData.length}`);
-      navigation.goBack();
+      // Calculate final score properly before showing the alert
+      const finalScore = score + (selectedAnswer === currentQuestion.correctAnswer && !isSubmitted ? 1 : 0);
+      Alert.alert(
+        "Quiz Complete! 🎉", 
+        `You scored ${finalScore} out of ${quizData.length}. Keep up the great work!`,
+        [{ text: "Back to Results", onPress: () => navigation.goBack() }]
+      );
     }
   };
 
@@ -82,6 +84,7 @@ export default function ActiveQuizScreen() {
     <SafeAreaView className="flex-1 bg-[#FAFAFA]">
       <StatusBar style="dark" backgroundColor="transparent" />
 
+      {/* Header and Progress Bar */}
       <View className="px-6 pt-4 pb-2">
         <View className="flex-row items-center justify-between mb-4">
           <TouchableOpacity 
@@ -113,7 +116,7 @@ export default function ActiveQuizScreen() {
         </Text>
 
         <View className="space-y-4 mb-8">
-          {currentQuestion.options.map((option, index) => {
+          {currentQuestion.options.map((option: string, index: number) => {
             const isCorrect = isSubmitted && option === currentQuestion.correctAnswer;
             const isWrongSelected = isSubmitted && selectedAnswer === option && option !== currentQuestion.correctAnswer;
             const labels = ['A', 'B', 'C', 'D'];
@@ -160,12 +163,14 @@ export default function ActiveQuizScreen() {
               <Text className="text-[16px] font-bold text-red-600 ml-2">Why was that incorrect?</Text>
             </View>
             <Text className="text-[14px] text-red-800 leading-6">
-              {currentQuestion.explanation}
+              {/* Fallback to a simple message if the backend didn't provide an explanation */}
+              {(currentQuestion as any).explanation || `The correct answer is ${currentQuestion.correctAnswer}.`}
             </Text>
           </View>
         )}
       </ScrollView>
 
+      {/* Footer Controls */}
       <View className="px-6 pb-8 bg-[#FAFAFA] border-t border-gray-100 pt-4">
         {!isSubmitted ? (
           <TouchableOpacity 
